@@ -1,5 +1,6 @@
 package io.github.fajran.kudupiye
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.ContentNegotiation
@@ -43,7 +44,7 @@ class Main {
                 get("/n/{id}") {
                     val id = call.parameters["id"]?.toIntOrNull()
                             ?: return@get call.respond(HttpStatusCode.NotFound)
-                    val data = agg[id]
+                    val data = agg[id]?.data
                             ?: return@get call.respond(HttpStatusCode.NotFound)
                     call.respond(data)
                 }
@@ -55,7 +56,25 @@ class Main {
                             ?: return@put call.respond(HttpStatusCode.NotFound)
                     call.respond(HttpStatusCode.OK)
                 }
+                get("/t/{id}") {
+                    val id = call.parameters["id"]?.toIntOrNull()
+                            ?: return@get call.respond(HttpStatusCode.NotFound)
+                    val node = agg[id]
+                            ?: return@get call.respond(HttpStatusCode.NotFound)
+
+                    val children = node.children
+                            .map { c -> Tree(c.id, c.data) }
+                    val tree = Tree(node.id, node.data, children)
+                    call.respond(tree)
+                }
             }
         }.start(wait = true)
     }
 }
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+data class Tree(
+        val id: Int,
+        val data: Data,
+        val children: List<Tree>? = null
+)
