@@ -13,28 +13,26 @@ import io.ktor.routing.put
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import java.io.File
+import kotlin.system.measureTimeMillis
 
-class Main {
+class Main(
+        private val nodesTsvFile: File
+) {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
-            val main = Main()
+            val nodesTsv = File(args[0])
+
+            val main = Main(nodesTsv)
             main.start()
         }
     }
 
-    fun start() {
-        val nodes = TreeBuilder()
-                .add(0, 1)
-                .add(1, 2)
-                .add(2, 3)
-                .add(2, 4)
-                .add(1, 5)
-                .add(0, 6)
-                .add(6, 7)
-                .build()
+    lateinit var agg: Aggregate
 
-        val agg = Aggregate(nodes)
+    fun start() {
+        loadHierarchy()
 
         embeddedServer(Netty, 8080) {
             install(ContentNegotiation) {
@@ -69,6 +67,28 @@ class Main {
                 }
             }
         }.start(wait = true)
+    }
+
+    private fun loadHierarchy() {
+        println("Loading hierarchy data..")
+
+        val tb = TreeBuilder()
+        val durationMs = measureTimeMillis {
+            nodesTsvFile.useLines { lines ->
+                lines.forEachIndexed { idx, line ->
+                    if (idx == 0) // skip header
+                        return@forEachIndexed
+
+                    val p = line.split("\t", limit = 2)
+                    tb.add(p[0].toInt(), p[1].toInt())
+                }
+                return@useLines tb.build()
+            }
+        }
+        println("Hierarchy data loaded in $durationMs ms")
+
+        val nodes = tb.build()
+        agg = Aggregate(nodes)
     }
 }
 
