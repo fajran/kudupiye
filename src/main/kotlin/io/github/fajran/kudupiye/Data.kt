@@ -1,25 +1,29 @@
 package io.github.fajran.kudupiye
 
-typealias Data = MutableMap<String, Int>
-
-fun Data.plus(data: Data) {
-    data.forEach { key, value ->
-        val curr = getOrDefault(key, 0)
-        put(key, curr + value)
+class Data(
+        val values: MutableMap<String, Int> = mutableMapOf()
+) {
+    @Synchronized
+    fun plus(data: Data) {
+        data.values.forEach { key, value ->
+            val curr = values.getOrDefault(key, 0)
+            values[key] = curr + value
+        }
     }
-}
 
-fun Data.minus(data: Data) {
-    data.forEach { key, value ->
-        val curr = getOrDefault(key, 0)
-        put(key, curr - value)
+    @Synchronized
+    fun minus(data: Data) {
+        data.values.forEach { key, value ->
+            val curr = values.getOrDefault(key, 0)
+            values[key] = curr - value
+        }
     }
-}
 
-fun Data.delta(data: Data): Data {
-    val delta: Data = mutableMapOf()
-    delta.plus(data)
-    delta.minus(this)
-    return delta
+    @Synchronized
+    fun delta(data: Data): Data {
+        val delta = Data(data.values.toMutableMap())
+        delta.minus(this)
+        return delta
+    }
 }
 

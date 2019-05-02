@@ -4,10 +4,11 @@ data class Node(
         val id: Int,
         val parent: Node? = null,
         val children: Set<Node> = setOf(),
-        val data: Data = mutableMapOf()
+        val data: Data = Data(mutableMapOf())
 ) {
     val isLeafNode = children.isEmpty()
 
+    @Synchronized
     fun set(data: Data): Node {
         if (!isLeafNode)
             throw IllegalStateException("Cannot set data to non-leaf nodes")

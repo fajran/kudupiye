@@ -44,16 +44,21 @@ class Main(
                             ?: return@get call.respond(HttpStatusCode.NotFound)
                     val data = agg[id]?.data
                             ?: return@get call.respond(HttpStatusCode.NotFound)
-                    call.respond(data)
+                    call.respond(data.values)
                 }
+
                 put("/n/{id}") {
                     val id = call.parameters["id"]?.toIntOrNull()
                             ?: return@put call.respond(HttpStatusCode.NotFound)
-                    val data = call.receive<Data>()
+
+                    val values = call.receive<Map<String, Int>>()
+                    val data = Data(values.toMutableMap())
+
                     agg.set(id, data)
                             ?: return@put call.respond(HttpStatusCode.NotFound)
                     call.respond(HttpStatusCode.OK)
                 }
+
                 get("/t/{id}") {
                     val id = call.parameters["id"]?.toIntOrNull()
                             ?: return@get call.respond(HttpStatusCode.NotFound)
@@ -61,8 +66,8 @@ class Main(
                             ?: return@get call.respond(HttpStatusCode.NotFound)
 
                     val children = node.children
-                            .map { c -> Tree(c.id, c.data) }
-                    val tree = Tree(node.id, node.data, children)
+                            .map { c -> Tree(c.id, c.data.values.toMap()) }
+                    val tree = Tree(node.id, node.data.values.toMap(), children)
                     call.respond(tree)
                 }
             }
@@ -95,6 +100,6 @@ class Main(
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class Tree(
         val id: Int,
-        val data: Data,
+        val data: Map<String, Int>,
         val children: List<Tree>? = null
 )
